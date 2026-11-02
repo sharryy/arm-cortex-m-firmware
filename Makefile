@@ -10,7 +10,7 @@ firmware.elf: $(SRCS) linker.ld uart.h
 	$(CC) $(CFLAGS) $(SRCS) $(LDFLAGS) -o $@
 
 run: firmware.elf
-	qemu-system-arm -M mps2-an385 -nographic -kernel firmware.elf
+	qemu-system-arm -M mps2-an385 -nographic -kernel firmware.elf -d unimp,guest_errors
 
 clean:
 	rm -f firmware.elf firmware.map

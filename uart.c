@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include "uart.h"
+#include <stdint.h>
 
 #define UART0_BASE 0x40004000u
 
@@ -11,6 +11,8 @@
 
 #define UART0_CTRL_TX_EN (1u << 0)
 #define UART0_STATE_TX_FULL (1u << 0)
+
+#define CHAR_MAP "0123456789ABCDEF"
 
 void uart_init(void) {
   UART0_BAUD_DIV = UART0_BAUD_DIV_MIN;
@@ -29,4 +31,16 @@ void uart_puts(const char *s) {
   while (*s != '\0') {
     uart_putc(*s++);
   }
+}
+
+void uart_puthex(uint32_t value) {
+  uart_putc('0');
+  uart_putc('x');
+
+  for (int i = 28; i >= 0; i -= 4) {
+    uint8_t block = (value >> i) & 0xf;
+    uart_putc(CHAR_MAP[block]);
+  }
+
+  uart_putc('\n');
 }

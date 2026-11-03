@@ -21,7 +21,12 @@ typedef enum { OK, EMULATOR, INCONCLUSIVE } result_t;
 result_t check_rom_table(void) {
   // ROM_SCS should always be present according to reference
   // and it's value should be exactly 0xFFF0F003
-  if ((*(volatile uint32_t *)ROM_BASE) != 0xFFF0F003) {
+  uint32_t rom = ROM_SCS;
+
+  uart_puts("\nrom_scs: ");
+  uart_puthex(rom);
+  
+  if (rom != 0xFFF0F003) {
     return EMULATOR;
   }
 
@@ -35,18 +40,27 @@ result_t check_dwt(void) {
     return INCONCLUSIVE;
   } else {
     DWT_CTRL |= DWT_CTRL_CYCCNTENA;
+    uart_puts("\ndwt_ctrl: ");
+    uart_puthex(DWT_CTRL);
 
     if (DWT_CTRL == 0) {
       return INCONCLUSIVE;
     }
 
     uint32_t start = DWT_CYCCNT;
+    uart_puts("\nstart-cyccnt: ");
+    uart_puthex(start);
 
     for (volatile int i = 0; i < 5000; i++) {
     }
 
     uint32_t end = DWT_CYCCNT;
+    uart_puts("\nend-cyccnt: ");
+    uart_puthex(end);
+
     uint32_t diff = end - start;
+    uart_puts("\ndiff-cyccnt: ");
+    uart_puthex(diff);
 
     if (diff == 0) {
       return EMULATOR;
@@ -59,9 +73,8 @@ result_t check_dwt(void) {
 int main(void) {
   uart_init();
 
-  uart_puts("cpu-id: ");
+  uart_puts("\ncpu-id: ");
   uart_puthex(CPU_ID);
-  uart_putc('\n');
 
   uart_puts("\nchecking rom table\n");
 
@@ -71,11 +84,13 @@ int main(void) {
     uart_puts("seems real silicon\n");
   }
 
-  uart_puts("\nchecking through dwg\n");
+  uart_puts("\nchecking through dwt\n");
 
-  if (check_dwt() == INCONCLUSIVE) {
+  result_t res = check_dwt();
+
+  if (res == INCONCLUSIVE) {
     uart_puts("unable to check.\n");
-  } else if (check_dwt() == EMULATOR) {
+  } else if (res == EMULATOR) {
     uart_puts("emulator detected.\n");
   } else {
     uart_puts("seems real silicon\n");
